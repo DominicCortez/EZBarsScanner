@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'item_details_page.dart';
+import 'sales_page.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 
 void main() {
@@ -48,13 +49,14 @@ class _MyHomePageState extends State<MyHomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               ElevatedButton(
-                  onPressed: scanBarcodeNormal,
-                  child: Text("Start barcode scan")),
-              ElevatedButton(onPressed: scnQR, child: Text("Start QR scan")),
+                onPressed: () => _scanBarcode(context),
+                child: Text("Scan for inventory"),
+              ),
               ElevatedButton(
-                  onPressed: startBarcodeStream,
-                  child: Text("Start barcode scan stream")),
-              Text("Barcode result $_scanBarcodeResult")
+                onPressed: () => _scanAndRedirect(context),
+                child: Text("Scan for sales"),
+              ),
+              Text("Scanned: $_scanBarcodeResult"),
             ],
           ),
         ),
@@ -62,43 +64,58 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void scanBarcodeNormal() async {
+  void _scanAndRedirect(BuildContext context) async {
     String barcodeScanRes;
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          "#ff6666", "cancel", true, ScanMode.BARCODE);
-    } on PlatformException {
-      barcodeScanRes = "Failed to get platform version";
-    }
-    setState(() {
-      _scanBarcodeResult = barcodeScanRes;
-    });
-  }
-
-  void scnQR() async {
-    String barcodeScanRes;
-    try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          "#ff6666", "cancel", true, ScanMode.QR);
-    } on PlatformException {
-      barcodeScanRes = "Failed to get platform version";
-    }
-    setState(() {
-      _scanBarcodeResult = barcodeScanRes;
-    });
-  }
-
-  void startBarcodeStream() async {
-    try {
-      await FlutterBarcodeScanner.getBarcodeStreamReceiver(
-        "#ff666",
+        "#ff6666",
         "cancel",
         true,
         ScanMode.BARCODE,
-      )!
-          .listen((barcode) {});
-    } catch (e) {
-      print(e);
+      );
+      _navigateToSalesPage(context, barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = "Failed to get platform version";
     }
+    setState(() {
+      _scanBarcodeResult = barcodeScanRes;
+    });
+  }
+
+  void _navigateToSalesPage(BuildContext context, String barcodeResult) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SalesPage(scanBarcodeResult: barcodeResult),
+      ),
+    );
+  }
+
+  void _scanBarcode(BuildContext context) async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+        "#ff6666",
+        "cancel",
+        true,
+        ScanMode.BARCODE,
+      );
+      _navigateToItemDetails(context, barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = "Failed to get platform version";
+    }
+    setState(() {
+      _scanBarcodeResult = barcodeScanRes;
+    });
+  }
+
+  void _navigateToItemDetails(BuildContext context, String barcodeResult) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ItemDetailsPage(scanBarcodeResult: barcodeResult),
+      ),
+    );
   }
 }
+
